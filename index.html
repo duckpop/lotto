@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        #cards{
+            display: flex;
+        }
+        .card{
+            padding: 10px;
+            margin-top: 20px;
+            border: 1px solid black;
+            width: 20%;
+        }
+
+        #WinningNumbers{
+            display: flex;
+        }
+
+        #top {
+            display: flex;
+            #left {
+                display: inline-block;
+                width: 320px;
+                margin-right: 80px ;
+                div {
+                    float: right;
+                    button {
+                        font-size: 15px;
+                        width: 150px;
+                        height: 30px;
+                        margin-top: 30px;
+                    }
+                }
+            }
+        }
+        .circle{
+            width: 30px;
+            height: 20px;
+            border: 1px solid black;
+            border-radius: 20px;
+            text-align: center;
+            padding-top: 5px;
+        }
+
+        .circleContainer{
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <div id="main">
+        <h1>National lottery</h1>
+        <div id="top">
+            <span id="left">
+                <h1>Add Ticket</h1>
+                <div><label>Name and Surname:</label><input type="text" id="Name"></div>
+                <div><label>Payment Amount:</label><input type="number" id="Cash"></div>
+                <div><label>Ticket Code:</label><input type="text" id="TicketCode"></div>
+                <div><label>Ticket Combination:</label><input type="text" id="Combo"></div>
+                <div><label>Bonus:</label><select id="Bonus"><option>YES</option><option>NO</option></select></div>
+                <div><button onclick="Submit()">Submit</button></div>
+            </span>
+            <span id="right">
+                <h1>Check Lotto</h1>
+                <div id="WinningNumbers">
+
+                </div>
+                <button id="SpinLotto" DISABLED onclick="RollWeeklyNumbers()">Get Weekly Numbers</button>
+                <p id="end">Total win: </p>
+            </span>
+        </div>
+        <div id="cards">
+
+        </div>
+    </div>
+
+    <script>
+        function Card (Name, Sum, Code,Combo, Bonus){
+        this.Name = Name;
+        this.Sum = Sum;
+        this.Codes = Code;
+        this.Combo = Combo;
+        this.Bonus = Bonus;
+        this.hits = 0;
+        this.totalwin = 0;
+        }
+
+        Cards = []
+        var counter = 0;
+
+        function Submit(){
+            var Name = document.getElementById("Name").value;
+            var Sum = document.getElementById("Cash").value;
+            var Code = document.getElementById("TicketCode").value;
+            var Combo = document.getElementById("Combo").value;
+            Combo = Combo.split(",");
+            var Bonus = document.getElementById("Bonus").value;
+
+            if (Name == null || Sum == null || Code == null || Combo == null){
+                alert("Not all areas are filled")
+                return;
+            }
+            if(Code.includes("%") || Code.includes("!") || Code.match(/\d/g)){
+                alert("Code can't contain %, ! or any number");
+                return;
+            }
+            for (let i = 0; i < counter; i++) {
+                if (Cards[i].Codes === Code){
+                    alert("code already in use")
+                    return;
+                }
+            }
+
+            Cards[counter] = new Card(Name, Sum, Code, Combo, Bonus);
+            var combination = "";
+            for (let i = 0; i < 7; i++) {
+                combination += "<p class='circle'>" + Cards[counter].Combo[i] + "</p>"
+            }
+
+            var CardsLocation = document.getElementById("cards");
+            var CardHTML = "<div class='card' id='" + Code + "' ><P> Name and Surname: " + Name + "</P><p>Sum payed:  " + Sum + "</p>"+
+                "<p>Code: " + Code + "</p><div class='circleContainer'><p>Combination: " + combination + "</p></div><p>Bonus: " + Bonus + " </p></div>";
+            CardsLocation.innerHTML += CardHTML;
+
+            counter++;
+            if(counter === 5){
+                var button = document.getElementById("SpinLotto")
+                button.disabled = false;
+            }
+        }
+        var numbers = [];
+        var numbersCount = 0
+        function RollWeeklyNumbers(){
+            for (let i = 0; i < 7; i++) {
+                var temp = Math.floor(Math.random() * 31) + 1;
+                for (let j = 0; j < numbersCount; j++) {
+                    if(numbers[j] === temp){
+                        i--;
+                        continue;
+                    }
+                }
+                numbers[numbersCount++] = temp;
+            }
+
+            var location = document.getElementById("WinningNumbers");
+            var combination = "";
+            for (let i = 0; i < 7; i++) {
+                location.innerHTML = "";
+                combination += "<p class='circle' style='background: rgb(" + Math. floor(Math. random() * 256) + "," + Math. floor(Math. random() * 256) + "," + Math. floor(Math. random() * 256) + ")'>" + numbers[i] + "</p>"
+            }
+            location.innerHTML += combination;
+
+            Check()
+        }
+        var endWin = 0;
+        function Check(){
+            for (let i = 0; i < 5; i++) {
+                var hts = 0;
+                for (let j = 0; j < 7; j++) {
+                    for (let k = 0; k < 7; k++) {
+                        if(Cards[i].Combo[j] == numbers[k]){
+                            hts++;
+                        }
+                    }
+                }
+                Cards[i].hits = hts;
+                console.log(Cards[i].hits);
+            }
+
+            for (let i = 0; i < 5; i++) {
+                var location = document.getElementById(Cards[i].Codes);
+                if(Cards[i].hits < 4){
+                    location.style.background = "Yellow";
+                }else if(Cards[i].hits < 6){
+                    location.style.background = "Blue";
+                }else{
+                    location.style.background = "Purple";
+                }
+
+                var totalWin  = "Total win: "
+                var WinAmount = parseInt(Cards[i].Sum) + parseInt(Cards[i].hits)*30;
+                if(Cards[i].Bonus == "YES"){
+                    WinAmount += 500;
+                }
+                totalWin += WinAmount;
+                endWin += parseInt(WinAmount);
+                Cards[i].totalwin = WinAmount;
+                location.innerHTML += "<p class='wins'>" + totalWin + "</p>"
+                location.innerHTML += "<button onclick='Remove(this)'> Pay out</button>"
+            }
+            Update();
+        }
+
+        function Remove(card) {
+            var ThisThing = card.parentNode;
+            var ticketCode = ThisThing.id;
+            var ticketIndex = Cards.findIndex(ticket => ticket.Codes === ticketCode);
+            if (ticketIndex !== -1) {
+                endWin -= Cards[ticketIndex].totalwin;
+                Cards.splice(ticketIndex, 1);
+            }
+            ThisThing.parentNode.removeChild(ThisThing);
+            Update();
+        }
+
+        function Update(){
+            var thing = document.getElementById("end")
+            thing.innerHTML = "Total Win: " + endWin;
+        }
+
+    </script>
+</body>
+</html>
